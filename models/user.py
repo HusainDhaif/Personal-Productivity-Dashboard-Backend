@@ -25,6 +25,9 @@ class UserModel(BaseModel):
         return pwd_context.verify(password, self.password_hash)
 
     def generate_token(self):
+        if not secret:
+            raise ValueError("JWT_SECRET is not configured")
+        
         payload = {
             "exp": datetime.now(timezone.utc) + timedelta(days=1),
             "iat": datetime.now(timezone.utc),
@@ -32,5 +35,9 @@ class UserModel(BaseModel):
         }
 
         token = jwt.encode(payload, secret, algorithm="HS256")
+        
+        # Ensure token is a string (PyJWT 2.0+ returns str, older versions may return bytes)
+        if isinstance(token, bytes):
+            token = token.decode('utf-8')
 
         return token
